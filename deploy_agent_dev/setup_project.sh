@@ -2,44 +2,33 @@
 
 set -e
 
-# ===============================
-# Automated Project Bootstrapper
-# ===============================
-
 read -p "Enter project name: " INPUT
 BASE_DIR="attendance_tracker_${INPUT}"
 ARCHIVE="attendance_tracker_${INPUT}_archive.tar.gz"
 
-# -------------------------------
-# TRAP: Handle Ctrl + C
-# -------------------------------
 cleanup() {
     echo ""
-    echo "⚠️ Script interrupted. Archiving project..."
+    echo "Script interrupted. Archiving project..."
 
     if [ -d "$BASE_DIR" ]; then
-        # Bundle the current state of the project
+        # Group the current state of the project
         tar -czf "$ARCHIVE" "$BASE_DIR"
         # Remove incomplete directory
         rm -rf "$BASE_DIR"
-        echo "📦 Archive created: $ARCHIVE"
-        echo "🧹 Incomplete directory removed"
+        echo "Archive created: $ARCHIVE"
+        echo "Incomplete directory removed"
     fi
     exit 1
 }
 
 trap cleanup SIGINT
 
-# -------------------------------
-# CREATE DIRECTORY STRUCTURE
-# -------------------------------
-echo "📁 Creating directory architecture..."
+# creating a directory
+echo " Creating directory architecture !!!!"
 mkdir -p "$BASE_DIR/Helpers"
 mkdir -p "$BASE_DIR/reports"
 
-# -------------------------------
-# CREATE attendance_checker.py
-# -------------------------------
+# creating attendance checker file
 cat <<'EOF' > "$BASE_DIR/attendance_checker.py"
 import csv
 import json
@@ -64,9 +53,9 @@ def run_attendance_check():
             attended = int(row['Attendance Count'])
             attendance_pct = (attended / total_sessions) * 100
             message = ""
-            if attendance_pct < config['thresholds']['failure']:
+            if attendance_pct < config['level']['failure']:
                 message = f"URGENT: {name}, your attendance is {attendance_pct:.1f}%. You will fail this class."
-            elif attendance_pct < config['thresholds']['warning']:
+            elif attendance_pct < config['level']['warning']:
                 message = f"WARNING: {name}, your attendance is {attendance_pct:.1f}%. Please be careful."
             if message:
                 if config['run_mode'] == "live":
@@ -78,10 +67,8 @@ def run_attendance_check():
 if __name__ == "__main__":
     run_attendance_check()
 EOF
+# Creating assets
 
-# -------------------------------
-# CREATE assets.csv
-# -------------------------------
 cat <<'EOF' > "$BASE_DIR/Helpers/assets.csv"
 Email,Names,Attendance Count,Absence Count
 alice@example.com,Alice Johnson,14,1
@@ -90,12 +77,11 @@ charlie@example.com,Charlie Davis,4,11
 diana@example.com,Diana Prince,15,0
 EOF
 
-# -------------------------------
-# CREATE config.json
-# -------------------------------
+#
+# Creating config file
 cat <<'EOF' > "$BASE_DIR/Helpers/config.json"
 {
-  "thresholds": {
+  "level": {
     "warning": 75,
     "failure": 50
   },
@@ -104,19 +90,15 @@ cat <<'EOF' > "$BASE_DIR/Helpers/config.json"
 }
 EOF
 
-# -------------------------------
-# CREATE reports.log
-# -------------------------------
+# creating  reports file
 touch "$BASE_DIR/reports/reports.log"
 
-# -------------------------------
-# DYNAMIC CONFIGURATION (sed)
-# -------------------------------
-read -p "Do you want to update attendance thresholds? (y/n): " CHOICE
+# Accepting or denying 
+read -p "Do you want to update attendance level? (y/n): " CHOICE
 
 if [ "$CHOICE" = "y" ]; then
-    read -p "Enter Warning threshold (default 75): " WARNING
-    read -p "Enter Failure threshold (default 50): " FAILURE
+    read -p "Enter Warning level (default 75): " WARNING
+    read -p "Enter Failure level (default 50): " FAILURE
 
     WARNING=${WARNING:-75}
     FAILURE=${FAILURE:-50}
@@ -124,31 +106,26 @@ if [ "$CHOICE" = "y" ]; then
     sed -i "s/\"warning\": [0-9]\+/\"warning\": $WARNING/" "$BASE_DIR/Helpers/config.json"
     sed -i "s/\"failure\": [0-9]\+/\"failure\": $FAILURE/" "$BASE_DIR/Helpers/config.json"
 
-    echo "✅ Thresholds updated in config.json"
+    echo "level updated"
 fi
 
-# -------------------------------
-# ENVIRONMENT HEALTH CHECK
-# -------------------------------
-echo "🔍 Checking Python installation..."
+echo "Checking if python is installed ... "
 
 if python3 --version >/dev/null 2>&1; then
-    echo "✅ Python3 is installed"
+    echo "Python3 is installed"
 else
-    echo "⚠️ Warning: Python3 is not installed"
+    echo "Warning: Python3 is not installed. please install python i beg "
 fi
 
-# -------------------------------
-# FINAL VALIDATION
-# -------------------------------
-echo "🔎 Validating directory structure..."
+# final validation
+echo " Checking directory structure.."
 
 if [ -f "$BASE_DIR/attendance_checker.py" ] &&
    [ -f "$BASE_DIR/Helpers/assets.csv" ] &&
    [ -f "$BASE_DIR/Helpers/config.json" ] &&
    [ -f "$BASE_DIR/reports/reports.log" ]; then
-    echo "🎉 Project setup completed successfully"
+    echo " Project setup completed successfully"
 else
-    echo "❌ Validation failed"
+    echo "ooh noooo!!!!!  Validation failed"
 fi
 
